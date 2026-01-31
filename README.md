@@ -1,4 +1,4 @@
-# Getting Started with GitHub Copilot
+# Minimal FastAPI Application
 
 ## Setup
 
