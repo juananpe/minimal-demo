@@ -20,11 +20,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        const participantsHTML = details.participants.length > 0
+          ? `<div class="participants-section">
+              <h5>Participants (${details.participants.length}/${details.max_participants})</h5>
+              <div class="participants-list">
+                ${details.participants.map(email => `<span class="participant-badge" data-activity="${name}" data-email="${email}">${email} <button class="delete-btn" title="Remove participant">X</button></span>`).join('')}
+              </div>
+            </div>`
+          : `<div class="participants-section empty">
+              <p>No participants yet</p>
+            </div>`; 
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          ${participantsHTML}
         `;
 
         activitiesList.appendChild(activityCard);
@@ -47,6 +59,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const email = document.getElementById("email").value;
     const activity = document.getElementById("activity").value;
+    const submitButton = signupForm.querySelector('button[type="submit"]');
+
+    // Disable submit button while request is in progress
+    submitButton.disabled = true;
 
     try {
       const response = await fetch(
@@ -62,6 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+
+        // Refresh activities list automatically so UI reflects changes
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -78,6 +97,39 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    } finally {
+      // Re-enable the submit button regardless of outcome
+      submitButton.disabled = false;
+    }
+  });
+
+  // Handle delete participant clicks (delegation)
+  activitiesList.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("delete-btn")) {
+      const badge = e.target.closest(".participant-badge");
+      const activityName = badge.dataset.activity;
+      const email = badge.dataset.email;
+      try {
+        const response = await fetch(`/activities/${encodeURIComponent(activityName)}/participants?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+        const result = await response.json();
+        if (response.ok) {
+          // Refresh activities list
+          fetchActivities();
+          messageDiv.textContent = result.message;
+          messageDiv.className = "success";
+          messageDiv.classList.remove("hidden");
+          setTimeout(() => { messageDiv.classList.add("hidden"); }, 3000);
+        } else {
+          messageDiv.textContent = result.detail || "An error occurred";
+          messageDiv.className = "error";
+          messageDiv.classList.remove("hidden");
+        }
+      } catch (error) {
+        messageDiv.textContent = "Failed to remove participant. Please try again.";
+        messageDiv.className = "error";
+        messageDiv.classList.remove("hidden");
+        console.error("Error removing participant:", error);
+      }
     }
   });
 
