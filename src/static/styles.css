@@ -210,6 +210,32 @@ footer {
   transform: translateY(-3px);
 }
 
+.participant-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.participant-remove {
+  background: transparent;
+  border: none;
+  color: #777;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+
+.participant-remove:hover {
+  background: #e0e0e0;
+  color: #c62828;
+}
+
 /* none state */
 .participants-none {
   color: #777;

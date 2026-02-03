@@ -13,6 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear loading message
       activitiesList.innerHTML = "";
 
+      // Preserve current selected activity and reset select options to avoid duplicates
+      const prevSelected = activitySelect.value;
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
+
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
@@ -44,6 +48,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const maxAvatars = 5;
           participants.forEach((p, idx) => {
             if (idx < maxAvatars) {
+              const item = document.createElement("div");
+              item.className = "participant-item";
+
               const avatar = document.createElement("span");
               avatar.className = "participant-avatar";
               // Generate initials from email/name segments
@@ -55,7 +62,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 .join("");
               avatar.textContent = initials || "?";
               avatar.title = p;
-              participantsListDiv.appendChild(avatar);
+
+              // Remove button (X)
+              const removeBtn = document.createElement("button");
+              removeBtn.className = "participant-remove";
+              removeBtn.type = "button";
+              removeBtn.title = `Remove ${p} from ${name}`;
+              removeBtn.textContent = "×";
+              removeBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (!confirm(`Remove ${p} from ${name}?`)) return;
+                await removeParticipant(name, p);
+              });
+
+              item.appendChild(avatar);
+              item.appendChild(removeBtn);
+              participantsListDiv.appendChild(item);
             }
           });
 
@@ -84,9 +106,42 @@ document.addEventListener("DOMContentLoaded", () => {
         option.textContent = name;
         activitySelect.appendChild(option);
       });
+
+      // Restore previous selection if still available
+      if (prevSelected && activities.hasOwnProperty(prevSelected)) {
+        activitySelect.value = prevSelected;
+      }
     } catch (error) {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
+    }
+  }
+
+  // Remove a participant from an activity
+  async function removeParticipant(activityName, email) {
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activityName)}/signup?email=${encodeURIComponent(email)}`,
+        { method: "DELETE" }
+      );
+      const result = await response.json();
+      if (response.ok) {
+        messageDiv.textContent = result.message;
+        messageDiv.className = "success";
+        messageDiv.classList.remove("hidden");
+        // Refresh the activities list to reflect changes
+        fetchActivities();
+      } else {
+        messageDiv.textContent = result.detail || "Failed to remove participant";
+        messageDiv.className = "error";
+        messageDiv.classList.remove("hidden");
+      }
+      setTimeout(() => messageDiv.classList.add("hidden"), 4000);
+    } catch (error) {
+      messageDiv.textContent = "Failed to remove participant. Please try again.";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      console.error("Error removing participant:", error);
     }
   }
 
@@ -110,6 +165,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
+        // Refresh activities list so the new participant appears immediately
+        await fetchActivities();
         signupForm.reset();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
