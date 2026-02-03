@@ -63,6 +63,8 @@ section h3 {
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #f9f9f9;
+  /* ensure avatars don't overflow */
+  overflow: hidden;
 }
 
 .activity-card h4 {
@@ -141,4 +143,76 @@ footer {
   margin-top: 30px;
   padding: 20px;
   color: #666;
+}
+
+/* Participants section */
+.participants {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.participants h5 {
+  margin: 0;
+  font-size: 13px;
+  color: #333;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.participants-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* avatar style */
+.participant-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a65, #ffb74d);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  cursor: default;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.participant-avatar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.16);
+}
+
+/* +N more indicator */
+.participant-more {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  cursor: default;
+  transition: transform 0.12s ease;
+}
+
+.participant-more:hover {
+  transform: translateY(-3px);
+}
+
+/* none state */
+.participants-none {
+  color: #777;
+  font-size: 14px;
+  margin: 0;
 }
