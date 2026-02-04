@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `;
 
-        // Render participant badges (initials with tooltip)
+        // Render participant badges (initials with tooltip) and a remove button
         const participantsList = activityCard.querySelector(".participants-list");
         if (!details.participants || details.participants.length === 0) {
           const empty = document.createElement("div");
@@ -51,11 +51,49 @@ document.addEventListener("DOMContentLoaded", () => {
           participantsList.appendChild(empty);
         } else {
           details.participants.forEach((email) => {
+            const item = document.createElement("div");
+            item.className = "participant-item";
+
             const badge = document.createElement("span");
             badge.className = "participant-badge";
             badge.textContent = getInitials(email);
             badge.title = email;
-            participantsList.appendChild(badge);
+
+            const removeBtn = document.createElement("button");
+            removeBtn.className = "participant-remove";
+            removeBtn.type = "button";
+            removeBtn.title = `Remove ${email}`;
+            removeBtn.textContent = "×";
+
+            // Click handler to remove participant
+            removeBtn.addEventListener("click", async () => {
+              if (!confirm(`Remove ${email} from ${name}?`)) return;
+              try {
+                const res = await fetch(`/activities/${encodeURIComponent(name)}/remove?email=${encodeURIComponent(email)}`, { method: "POST" });
+                const resJson = await res.json();
+                if (res.ok) {
+                  messageDiv.textContent = resJson.message;
+                  messageDiv.className = "success";
+                  messageDiv.classList.remove("hidden");
+                  setTimeout(() => { messageDiv.classList.add("hidden"); }, 5000);
+                  // Refresh activities to reflect change
+                  fetchActivities();
+                } else {
+                  messageDiv.textContent = resJson.detail || "An error occurred";
+                  messageDiv.className = "error";
+                  messageDiv.classList.remove("hidden");
+                }
+              } catch (err) {
+                messageDiv.textContent = "Failed to remove participant. Please try again.";
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+                console.error("Error removing participant:", err);
+              }
+            });
+
+            item.appendChild(badge);
+            item.appendChild(removeBtn);
+            participantsList.appendChild(item);
           });
         }
 
@@ -94,6 +132,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh the activities list so the new participant appears immediately
+        await fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
